@@ -217,7 +217,7 @@ def pobierz(domena, login="", haslo="", ou=""):
             korzen, "(&%s(memberOf:1.2.840.113556.1.4.1941:=%s))" % (
                 FILTR_KONT, ldap_esc(g["distinguishedName"])), ["distinguishedName"])]
     wynik = {
-        "Konta": q(start, FILTR_KONT, ATR_KONT),
+        "Konta": q(korzen, FILTR_KONT, ATR_KONT),  # cala domena: admini, krbtgt; OU w analizuj()
         "Komputery": komputery,
         "Grupy": grupy,
         "Domena": (q(korzen, "(objectClass=*)", ATR_DOMENY, "base") or [{}])[0],
@@ -297,20 +297,23 @@ def wczytaj_wykluczenia(plik=PLIK_WYKLUCZEN):
     """Jedna nazwa (login / komputer) w linii, dozwolone * i ?, # = komentarz."""
     if not os.path.exists(plik):
         return []
-    with open(plik, encoding="utf-8-sig") as f:
+    with open(plik, encoding="utf-8-sig", errors="replace") as f:  # Notatnik ANSI
         return [l.strip().lower() for l in f if l.strip() and not l.lstrip().startswith("#")]
 
 
-def analizuj(dane, teraz, dni=90, dni_hasla=365, wylaczone=False, wzorce=(), domena=""):
-    """Surowe dane z AD -> {zakladka: wiersze} (kolumny jak w KOLUMNY)."""
+def analizuj(dane, teraz, dni=90, dni_hasla=365, wylaczone=False, wzorce=(), domena="", ou=""):
+    """Surowe dane z AD -> {zakladka: wiersze} (kolumny jak w KOLUMNY).
+    `ou` zaweza konta w zakladkach nieaktywnych i ryzyk; Uprzywilejowani
+    i Podsumowanie zawsze dla calej domeny."""
     konta = [konto(r) for r in dane["Konta"]]
     komputery = [komputer(r) for r in dane["Komputery"]]
     stan = lambda o: "wyłączone" if o["wylaczone"] else "aktywne"
     data = lambda d: d or "nigdy"
     widoczne = lambda o: (wylaczone or not o["wylaczone"]) and not wykluczony(o["nazwa"], wzorce)
+    w_ou = [o for o in konta if not ou or o["dn"].lower().endswith(ou.lower())]
     T = {}
 
-    nk = nieaktywne([o for o in konta if not wykluczony(o["nazwa"], wzorce)], dni, teraz, wylaczone)
+    nk = nieaktywne([o for o in w_ou if not wykluczony(o["nazwa"], wzorce)], dni, teraz, wylaczone)
     T["Nieaktywne konta"] = [[o["nazwa"], o["opis"], data(o["ostatnie"]), data(o["dni"]),
                               o["utworzone"], stan(o), o["ou"]] for o in nk]
     nc = nieaktywne([o for o in komputery if not wykluczony(o["nazwa"], wzorce)], dni, teraz, wylaczone)
@@ -337,7 +340,7 @@ def analizuj(dane, teraz, dni=90, dni_hasla=365, wylaczone=False, wzorce=(), dom
 
     T["Ryzyka kont"] = [[o["nazwa"], o["opis"], "; ".join(u), data(o["haslo"]),
                          data(o["ostatnie"]), o["ou"]]
-                        for o in konta if widoczne(o) and o["rid"] != RID_KRBTGT
+                        for o in w_ou if widoczne(o) and o["rid"] != RID_KRBTGT
                         for u in [ryzyka_konta(o, teraz, dni_hasla)] if u]
     laps = [o for o in komputery if not o["wylaczone"] and not o["dc"]]
     laps_wdrozony = any(o["laps"] for o in laps)
@@ -439,7 +442,7 @@ def run(domena, out_dir, log, dni=90, dni_hasla=365, login="", haslo="", wylaczo
     log("Odczyt AD: %s%s ..." % (domena, " / " + ou if ou else ""))
     dane = (zrodlo or pobierz)(domena, login, haslo, ou)
     teraz = datetime.datetime.now()
-    tabele = analizuj(dane, teraz, dni, dni_hasla, wylaczone, wzorce, domena)
+    tabele = analizuj(dane, teraz, dni, dni_hasla, wylaczone, wzorce, domena, ou)
     for nazwa, wiersze in tabele.items():
         if nazwa != "Podsumowanie":
             log("%s: %d" % (nazwa.replace("ó", "o"), len(wiersze)))
@@ -580,9 +583,11 @@ def gui():
             try:
                 wynik = run(dom, v_out.get().strip('" '), log, dni, dni_hasla,
                             v_login.get().strip(), v_haslo.get(), v_wyl.get(), ou)
-                dane.clear()
-                dane.update(wynik)
-                root.after(0, wypelnij)
+                def pokaz():  # w watku GUI - wypelnij() czyta `dane` przy wyszukiwaniu
+                    dane.clear()
+                    dane.update(wynik)
+                    wypelnij()
+                root.after(0, pokaz)
             except PermissionError as e:
                 log("BLAD: nie mozna zapisac %s - zamknij ten plik w Excelu." % e.filename)
             except Exception as e:  # com_error, brak sieci, bledne haslo
@@ -743,6 +748,13 @@ def selftest():
     assert P["Użytkownicy mogą dodawać komputery do domeny (MachineAccountQuota)"] == ["10", "UWAGA"]
     assert P["Wykluczenia (wykluczenia.txt)"] == ["1", "INFO"]
 
+    # OU zaweza nieaktywne i ryzyka, ale nie administratorow i Podsumowania
+    T4 = analizuj(dane, teraz, 90, 365, False, [], "urzad.local", ou="ou=PUSTA," + D)
+    assert not T4["Nieaktywne konta"] and not T4["Ryzyka kont"]
+    assert len(T4["Uprzywilejowani"]) == 3 and "Hasło konta krbtgt zmienione" in {w[0] for w in T4["Podsumowanie"]}
+    T5 = analizuj(dane, teraz, 90, 365, False, [], "urzad.local", ou="OU=Kadry," + D)
+    assert len(T5["Nieaktywne konta"]) == 4
+
     # bez LAPS w domenie: nie zasypuje kazdego komputera uwaga "brak LAPS"
     bez = dict(dane, Komputery=[dict(x, **{"msLAPS-PasswordExpirationTime": None}) for x in dane["Komputery"]])
     T3 = analizuj(bez, teraz, 90, 365, False, [], "urzad.local")
@@ -755,6 +767,9 @@ def selftest():
         fw.write("# komentarz\n\n  STARY \nsvc_*\n")
     assert wczytaj_wykluczenia(os.path.join(tmp, "w.txt")) == ["stary", "svc_*"]
     assert wczytaj_wykluczenia(os.path.join(tmp, "brak.txt")) == []
+    with open(os.path.join(tmp, "ansi.txt"), "w", encoding="cp1250") as fw:
+        fw.write("ksiegowa\nżółw\n")
+    assert wczytaj_wykluczenia(os.path.join(tmp, "ansi.txt"))[0] == "ksiegowa"
     lines = []
     wyn = run("urzad.local", tmp, lines.append, dni=7, wzorce=["stary"],
               zrodlo=lambda dom, l, h, ou: dane)
