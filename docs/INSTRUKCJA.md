@@ -170,7 +170,7 @@ Następnie w `dsa.msc` → konto → *Zabezpieczenia* → *Zaawansowane* →
 | tylko szyfrowanie DES | wyłącz flagę, zmień hasło | `Set-ADAccountControl jkowalska -UseDESKeyOnly $false` |
 | bez preautoryzacji Kerberos | wyłącz flagę — wyjątkowo rzadko potrzebna (stare systemy uniksowe) | `Set-ADAccountControl jkowalska -DoesNotRequirePreAuth $false` |
 | ma SPN (Kerberoasting) | hasło konta usługi: 25+ losowych znaków, zmienione; najlepiej przejść na gMSA; usunąć niepotrzebne SPN | `Get-ADUser svc_backup -Properties servicePrincipalName` |
-| hasło niezmieniane od N dni | wymusić zmianę przy następnym logowaniu | `Set-ADUser jkowalska -ChangePasswordAtLogon $true` |
+| hasło niezmieniane od N dni | wymusić zmianę przy następnym logowaniu (przy koncie z „hasło nigdy nie wygasa” najpierw zdjąć tę flagę, inaczej polecenie zwróci błąd) | `Set-ADUser jkowalska -ChangePasswordAtLogon $true` |
 | konto wygasło | wyłączyć / usunąć zgodnie z procedurą jak dla nieaktywnych | |
 
 Kont technicznych, które **świadomie** mają wyjątek (np. konto skanera
@@ -197,8 +197,15 @@ skaner
 
 | Kontrola z UWAGĄ | Działanie |
 |------------------|-----------|
-| Minimalna długość hasła < 12 | GPO *Default Domain Policy* → *Zasady konta → Zasady haseł* albo `Set-ADDefaultDomainPasswordPolicy -Identity urzad.local -MinPasswordLength 12`. Zmiana dotyczy haseł ustawianych **od teraz**. Uprzedź pracowników. |
-| Brak blokady konta | `Set-ADDefaultDomainPasswordPolicy -Identity urzad.local -LockoutThreshold 10 -LockoutDuration 00:15:00 -LockoutObservationWindow 00:15:00` |
+| Minimalna długość hasła < 12 | `gpmc.msc` → GPO **Default Domain Policy** (podpięte do domeny) → *Konfiguracja komputera → Zasady → Ustawienia systemu Windows → Ustawienia zabezpieczeń → Zasady konta → Zasady haseł* → *Minimalna długość hasła* = 12. Zmiana dotyczy haseł ustawianych **od teraz**. Uprzedź pracowników. |
+| Brak blokady konta | to samo GPO → *Zasady konta → Zasady blokady konta*: próg 10 błędnych prób, czas blokady i zerowania licznika 15 minut. |
+
+> Politykę haseł i blokady zmieniaj **w GPO Default Domain Policy**, nie poleceniem
+> `Set-ADDefaultDomainPasswordPolicy`: jeśli GPO definiuje te ustawienia (domyślnie tak),
+> kontroler domeny nadpisze zmianę zrobioną poleceniem przy najbliższym odświeżeniu zasad.
+
+| Kontrola z UWAGĄ (c.d.) | Działanie |
+|------------------|-----------|
 | MachineAccountQuota > 0 | `Set-ADDomain -Identity urzad.local -Replace @{"ms-DS-MachineAccountQuota"="0"}`. Komputery dołącza wtedy do domeny tylko administrator (albo konto z delegowanym uprawnieniem w OU). |
 | Hasło krbtgt starsze niż 180 dni | zmień hasło **dwa razy, w odstępie co najmniej 10 godzin** (czas ważności biletów Kerberos). Użyj skryptu Microsoft `New-KrbtgtKeys.ps1` — sprawdza replikację przed zmianą. **Nie zmieniaj dwa razy pod rząd** — wszyscy zostaną wylogowani z usług domenowych. |
 | Konto Gość włączone | `Disable-ADAccount -Identity Gość` (nazwa zależy od języka: *Gość* / *Guest*) |
