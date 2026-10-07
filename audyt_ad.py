@@ -274,6 +274,8 @@ def gui():
                 wyniki = run(dom, dni, v_out.get().strip('" '), log, v_login.get().strip(),
                              v_haslo.get(), v_wyl.get())
                 root.after(0, lambda: pokaz(wyniki))
+            except PermissionError as e:
+                log("BLAD: nie mozna zapisac %s - zamknij ten plik w Excelu." % e.filename)
             except Exception as e:  # com_error, brak sieci, bledne haslo
                 info = getattr(e, "excepinfo", None)
                 e = info[2].strip() if info and info[2] else e
