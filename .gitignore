@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+CLAUDE.md
+
+# dokumenty z danymi osobowymi - nigdy na GitHub
+OUTPUT/*
+!OUTPUT/.gitkeep
+pliki testowe/
