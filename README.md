@@ -22,7 +22,7 @@ nie usuwa i nie zmienia. Wynik jest w oknie i w pliku Excela.
 ## Szybki start
 
 1. Zainstaluj [Pythona](https://www.python.org/downloads/windows/) (zaznacz **„Add python.exe to PATH”**).
-2. Pobierz program: **Code → Download ZIP**, rozpakuj np. do `C:\Programy\Audyt AD`.
+2. Pobierz `Audyt-AD-<wersja>.zip` z [najnowszego wydania](https://github.com/DawidBochno/Audyt-AD/releases/latest) i rozpakuj np. do `C:\Programy\`.
 3. Uruchom **`install.bat`** (raz). Na końcu musi pojawić się „selftest OK”.
 4. Uruchom **`uruchom.bat`** → sprawdź pole **Domena** → **Skanuj**.
 5. Zacznij od zakładki **Podsumowanie**, potem **Uprzywilejowani**.
@@ -197,9 +197,11 @@ Nie trzeba instalować RSAT ani modułu PowerShell ActiveDirectory. Program
 1. **Python**: pobierz z [python.org](https://www.python.org/downloads/windows/)
    (wersja 3.9 lub nowsza). W instalatorze zaznacz **„Add python.exe to PATH”**.
    Opcja „tcl/tk and IDLE” jest zaznaczona domyślnie i musi taka zostać.
-2. **Program**: na stronie [github.com/DawidBochno/Audyt-AD](https://github.com/DawidBochno/Audyt-AD)
-   kliknij zielony przycisk **Code → Download ZIP**. Rozpakuj archiwum,
-   np. do `C:\Programy\Audyt AD`. Nie uruchamiaj programu z wnętrza ZIP-a.
+2. **Program**: otwórz [najnowsze wydanie](https://github.com/DawidBochno/Audyt-AD/releases/latest)
+   i w sekcji **Assets** pobierz plik `Audyt-AD-<wersja>.zip`. Rozpakuj go,
+   np. do `C:\Programy\`. Powstanie folder `C:\Programy\Audyt AD`.
+   Nie uruchamiaj programu z wnętrza ZIP-a.
+   Na stronie wydania jest też opis zmian w danej wersji.
 3. Kliknij dwukrotnie **`install.bat`**. Instaluje biblioteki `openpyxl`
    i `pywin32` (potrzebny internet) i uruchamia test. Na końcu pojawia się
    **„selftest OK”**.
