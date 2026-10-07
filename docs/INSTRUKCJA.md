@@ -6,7 +6,7 @@ i przegląd okresowy. Opis programu i jego kontroli jest w [README](../README.md
 
 ## Spis treści
 
-1. [Zanim zaczniesz](#1-zanim-zaczniesz)
+1. [Zanim zaczniesz](#1-zanim-zaczniesz) (w tym: [czy skan zostanie wykryty?](#czy-ad-zablokuje-skan-czy-zostanie-wykryty))
 2. [Pierwszy skan](#2-pierwszy-skan)
 3. [Jak czytać wyniki](#3-jak-czytać-wyniki)
 4. [Co zrobić z każdą uwagą](#4-co-zrobić-z-każdą-uwagą)
@@ -35,6 +35,38 @@ Add-WindowsCapability -Online -Name Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0
 ```
 
 Na kontrolerze domeny moduł jest już zainstalowany.
+
+### Czy AD zablokuje skan? Czy zostanie wykryty?
+
+**AD go nie zablokuje.** Program robi zwykłe zapytania LDAP, takie same jak
+każdy komputer w domenie (książka adresowa Outlooka, logowanie, zasady
+grup). Każde konto domenowe ma domyślnie prawo do odczytu tych atrybutów.
+Logowanie do AD odbywa się przez Kerberos/Negotiate z podpisywaniem, więc
+działa także w domenach z wymuszonym podpisywaniem LDAP. Program nie
+zgaduje haseł, nie pobiera biletów Kerberos usług i nie odczytuje haseł LAPS.
+
+**Może zostać zauważony przez systemy bezpieczeństwa.** Pobranie listy
+wszystkich kont, administratorów i atrybutów ryzyka w kilka sekund wygląda
+z zewnątrz tak samo jak **rozpoznanie domeny przed atakiem**. Robią to
+także PingCastle, BloodHound i atakujący. Dlatego:
+
+| Gdzie | Co może się stać |
+|-------|------------------|
+| **Microsoft Defender for Identity**, CrowdStrike Identity, Tenable AD i podobne | alert typu *rozpoznanie przez LDAP* (LDAP reconnaissance) dla Twojego konta i komputera |
+| SIEM / SOC, który zbiera dzienniki kontrolerów | alert, jeśli na kontrolerach włączono rejestrowanie zapytań LDAP (zdarzenie 1644, domyślnie wyłączone) |
+| **Dzienniki kontrolera domeny** domyślnie | nic szczególnego, tylko zwykłe logowanie Kerberos tego konta |
+| Antywirus / EDR na Twoim komputerze | zwykle nic (Python i biblioteka Windows ADSI). Przy zasadach AppLocker/WDAC może być zablokowany sam Python, a nie skan. |
+| Blokada konta | tylko przy **błędnym haśle** wpisanym w pole *Hasło*. Każda próba liczy się jak nieudane logowanie. Program nie ponawia prób sam. |
+
+**Zalecenie:** przed pierwszym skanem uprzedź osobę odpowiedzialną za
+bezpieczeństwo (SOC, dostawcę usług IT). Podaj datę, godzinę, nazwę
+konta i komputera, z którego skanujesz. Skanuj z jednego, stałego komputera
+administratora. Wtedy alert da się szybko wyjaśnić, a regularne skany można
+dodać do wyjątków. Alert wywołany przez program to dobra wiadomość: znaczy,
+że wykrywanie w Twojej sieci działa.
+
+Program nie ma i nie będzie mieć trybu ukrywania się przed tymi systemami.
+To narzędzie dla administratora, a nie do testów „po cichu”.
 
 ---
 
