@@ -19,6 +19,34 @@ nie usuwa i nie zmienia. Wynik jest w oknie i w pliku Excela.
 
 *(na zrzutach dane fikcyjne)*
 
+## Szybki start
+
+1. Zainstaluj [Pythona](https://www.python.org/downloads/windows/) (zaznacz **„Add python.exe to PATH”**).
+2. Pobierz program: **Code → Download ZIP**, rozpakuj np. do `C:\Programy\Audyt AD`.
+3. Uruchom **`install.bat`** (raz). Na końcu musi pojawić się „selftest OK”.
+4. Uruchom **`uruchom.bat`** → sprawdź pole **Domena** → **Skanuj**.
+5. Zacznij od zakładki **Podsumowanie**, potem **Uprzywilejowani**.
+   Raport Excela jest w folderze `OUTPUT`.
+
+📘 **Pełna instrukcja dla administratora: [docs/INSTRUKCJA.md](docs/INSTRUKCJA.md)**.
+Jest w niej pierwszy skan krok po kroku i jak czytać wyniki. Dla każdej uwagi
+podaje, **co z nią zrobić** (z poleceniami PowerShell). Do tego procedura
+przeglądu kwartalnego, rozwiązywanie problemów i słownik pojęć.
+
+## Spis treści
+
+- [Zakładki](#zakładki): [Podsumowanie](#podsumowanie) ·
+  [Nieaktywne](#nieaktywne-konta--nieaktywne-komputery) ·
+  [Uprzywilejowani](#uprzywilejowani) · [Ryzyka kont](#ryzyka-kont) ·
+  [Ryzyka komputerów](#ryzyka-komputerów)
+- [Wyszukiwanie, sortowanie, szczegóły](#wyszukiwanie-sortowanie-szczegóły)
+- [Wykluczenia](#wykluczenia)
+- [Plik Excela](#plik-excela)
+- [Dokładność daty logowania](#dokładność-daty-logowania)
+- [Wymagania](#wymagania) · [Instalacja](#instalacja-jednorazowo) · [Jak używać](#jak-używać)
+- [Prywatność](#prywatność) · [Aktualizacje](#aktualizacje) ·
+  [Ograniczenia](#ograniczenia) · [Testy](#testy)
+
 ## Zakładki
 
 ### Podsumowanie
@@ -190,6 +218,10 @@ Nie trzeba instalować RSAT ani modułu PowerShell ActiveDirectory. Program
    **Hasło starsze niż (dni)**: próg starego hasła, domyślnie 365.
 5. **Login / Hasło**: zostaw puste na komputerze w domenie.
 6. Kliknij **Skanuj**.
+
+Co dalej z wynikami (wyłączanie kont, czyszczenie uprawnień, LAPS,
+`krbtgt`, polityka haseł) i rozwiązania typowych błędów są opisane
+w [docs/INSTRUKCJA.md](docs/INSTRUKCJA.md).
 
 ## Prywatność
 
