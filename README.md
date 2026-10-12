@@ -187,7 +187,7 @@ pracownik faktycznie odszedł.
 - Albo komputer spoza domeny, który „widzi” kontroler domeny w sieci.
   Wtedy wpisz **Login** (`DOMENA\uzytkownik` albo `uzytkownik@domena.local`)
   i **Hasło**. Hasło nie jest nigdzie zapisywane.
-- Windows 10/11 lub Windows Server, Python 3.9+.
+- Windows 10/11 lub Windows Server, Python 3.11+.
 
 Nie trzeba instalować RSAT ani modułu PowerShell ActiveDirectory. Program
 łączy się z AD przez wbudowany w Windows mechanizm ADSI (LDAP).
@@ -195,7 +195,7 @@ Nie trzeba instalować RSAT ani modułu PowerShell ActiveDirectory. Program
 ## Instalacja (jednorazowo)
 
 1. **Python**: pobierz z [python.org](https://www.python.org/downloads/windows/)
-   (wersja 3.9 lub nowsza). W instalatorze zaznacz **„Add python.exe to PATH”**.
+   (wersja 3.11 lub nowsza, najlepiej najnowsza). W instalatorze zaznacz **„Add python.exe to PATH”**.
    Opcja „tcl/tk and IDLE” jest zaznaczona domyślnie i musi taka zostać.
 2. **Program**: otwórz [najnowsze wydanie](https://github.com/DawidBochno/Audyt-AD/releases/latest)
    i w sekcji **Assets** pobierz plik `Audyt-AD-<wersja>.zip`. Rozpakuj go,
